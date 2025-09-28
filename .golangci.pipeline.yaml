@@ -1,4 +1,3 @@
-# More info on config here: https://golangci-lint.run/usage/configuration/#config-file
 run:
   concurrency: 8
   timeout: 10m
@@ -16,7 +15,6 @@ run:
       - .cache
 
 output:
-  formats: colored-line-number
   print-issued-lines: true
   print-linter-name: true
 
