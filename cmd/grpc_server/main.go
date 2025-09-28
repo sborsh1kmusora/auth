@@ -1,3 +1,4 @@
+// Package main implements the gRPC server
 package main
 
 import (
@@ -13,11 +14,13 @@ import (
 )
 
 const (
-	grpcPort = ":50051"
+	grpcAddr = "localhost:50051"
 )
 
 func (s *server) Create(ctx context.Context, in *desc.CreateRequest) (*desc.CreateResponse, error) {
 	fmt.Printf("Create request received: %+v\n", in)
+
+	_ = ctx
 
 	return nil, nil
 }
@@ -25,17 +28,23 @@ func (s *server) Create(ctx context.Context, in *desc.CreateRequest) (*desc.Crea
 func (s *server) Get(ctx context.Context, in *desc.GetRequest) (*desc.GetResponse, error) {
 	fmt.Printf("Get request received: %+v\n", in)
 
+	_ = ctx
+
 	return nil, nil
 }
 
 func (s *server) Update(ctx context.Context, in *desc.UpdateRequest) (*emptypb.Empty, error) {
 	fmt.Printf("Update request received: %+v\n", in)
 
+	_ = ctx
+
 	return nil, nil
 }
 
 func (s *server) Delete(ctx context.Context, in *desc.DeleteRequest) (*emptypb.Empty, error) {
 	fmt.Printf("Delete request received: %+v\n", in)
+
+	_ = ctx
 
 	return nil, nil
 }
@@ -45,7 +54,7 @@ type server struct {
 }
 
 func main() {
-	lis, err := net.Listen("tcp", grpcPort)
+	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

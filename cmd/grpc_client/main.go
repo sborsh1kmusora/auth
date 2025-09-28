@@ -1,3 +1,4 @@
+// Package main implements the gRPC client
 package main
 
 import (
@@ -19,7 +20,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			log.Printf("could not close connection: %v", err)
+		}
+	}()
 
 	c := desc.NewAuthV1Client(conn)
 
