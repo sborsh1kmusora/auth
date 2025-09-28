@@ -1,4 +1,4 @@
-module auth
+module github.com/fvckinginsxne/auth
 
 go 1.24.5
 
