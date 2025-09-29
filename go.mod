@@ -1,4 +1,4 @@
-module github.com/fvckinginsxne/auth
+module github.com/sborsh1kmusora/auth
 
 go 1.24.5
 
@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/brianvoe/gofakeit v3.18.0+incompatible // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect

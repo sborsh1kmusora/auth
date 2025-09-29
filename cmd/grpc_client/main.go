@@ -6,13 +6,13 @@ import (
 	"log"
 	"time"
 
-	desc "github.com/fvckinginsxne/auth/pkg/auth_v1"
+	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	address = "localhost:50051"
+	address = ":50051"
 )
 
 func main() {
