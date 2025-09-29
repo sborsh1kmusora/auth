@@ -7,15 +7,20 @@ import (
 	"log"
 	"net"
 
-	desc "github.com/fvckinginsxne/auth/pkg/auth_v1"
+	"github.com/brianvoe/gofakeit"
+	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const (
-	grpcAddr = "localhost:50051"
+	grpcAddr = ":50051"
 )
+
+type server struct {
+	desc.UnimplementedAuthV1Server
+}
 
 func (s *server) Create(ctx context.Context, in *desc.CreateRequest) (*desc.CreateResponse, error) {
 	fmt.Printf("Create request received: %+v\n", in)
@@ -30,7 +35,16 @@ func (s *server) Get(ctx context.Context, in *desc.GetRequest) (*desc.GetRespons
 
 	_ = ctx
 
-	return nil, nil
+	return &desc.GetResponse{
+		User: &desc.User{
+			Id: in.GetId(),
+			UserInfo: &desc.UserInfo{
+				Name:  gofakeit.Name(),
+				Email: gofakeit.Email(),
+				Role:  desc.Role_ADMIN,
+			},
+		},
+	}, nil
 }
 
 func (s *server) Update(ctx context.Context, in *desc.UpdateRequest) (*emptypb.Empty, error) {
@@ -49,12 +63,8 @@ func (s *server) Delete(ctx context.Context, in *desc.DeleteRequest) (*emptypb.E
 	return nil, nil
 }
 
-type server struct {
-	desc.UnimplementedAuthV1Server
-}
-
 func main() {
-	lis, err := net.Listen("tcp", grpcAddr)
+	lis, err := net.Listen("tcp", grpcAddr) // #nosec G102
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
