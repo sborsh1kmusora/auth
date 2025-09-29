@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 const (
@@ -39,10 +40,12 @@ func (s *server) Get(ctx context.Context, in *desc.GetRequest) (*desc.GetRespons
 		User: &desc.User{
 			Id: in.GetId(),
 			UserInfo: &desc.UserInfo{
-				Name:  gofakeit.Name(),
-				Email: gofakeit.Email(),
+				Name:  "Matvey",
+				Email: "Likhanov",
 				Role:  desc.Role_ADMIN,
 			},
+			CreatedAt: timestamppb.New(gofakeit.Date()),
+			UpdatedAt: timestamppb.New(gofakeit.Date()),
 		},
 	}, nil
 }
