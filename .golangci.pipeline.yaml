@@ -12,5 +12,4 @@ linters:
     - gosec
     - govet
     - ineffassign
-    - revive
     - unused
