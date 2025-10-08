@@ -1,4 +1,4 @@
-name: CI
+name: GO
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ main, master ]
 
 env:
-  REGISTRY: "cr.selcloud.ru/study"
+  REGISTRY: "cr.selcloud.ru/chat"
   IMAGE_NAME: "auth"
   CONTAINER_NAME: "auth-container"
 
