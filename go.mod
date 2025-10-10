@@ -4,6 +4,7 @@ go 1.24.5
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
+	github.com/golang/protobuf v1.5.4
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.75.1
