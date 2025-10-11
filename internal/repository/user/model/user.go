@@ -6,14 +6,14 @@ import (
 )
 
 type User struct {
-	ID        int64
-	Info      UserInfo
-	CreatedAt time.Time
-	UpdatedAt sql.NullTime
+	ID        int64        `db:"id"`
+	Info      UserInfo     `db:""`
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt sql.NullTime `db:"updated_at"`
 }
 
 type UserInfo struct {
-	Name    string
-	Email   string
-	IsAdmin bool
+	Name    string `db:"name"`
+	Email   string `db:"email"`
+	IsAdmin bool   `db:"is_admin"`
 }
