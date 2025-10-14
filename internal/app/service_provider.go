@@ -5,15 +5,15 @@ import (
 	"log"
 
 	"github.com/sborsh1kmusora/auth/internal/api/user"
-	"github.com/sborsh1kmusora/auth/internal/client/db"
-	"github.com/sborsh1kmusora/auth/internal/client/db/pg"
-	"github.com/sborsh1kmusora/auth/internal/client/db/transaction"
-	"github.com/sborsh1kmusora/auth/internal/closer"
 	"github.com/sborsh1kmusora/auth/internal/config"
 	"github.com/sborsh1kmusora/auth/internal/repository"
 	userRepo "github.com/sborsh1kmusora/auth/internal/repository/user"
 	"github.com/sborsh1kmusora/auth/internal/service"
 	userService "github.com/sborsh1kmusora/auth/internal/service/user"
+	"github.com/sborsh1kmusora/platform_common/pkg/closer"
+	"github.com/sborsh1kmusora/platform_common/pkg/db"
+	"github.com/sborsh1kmusora/platform_common/pkg/db/pg"
+	"github.com/sborsh1kmusora/platform_common/pkg/db/transaction"
 )
 
 type serviceProvider struct {
