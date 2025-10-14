@@ -5,9 +5,9 @@ import (
 	"log"
 	"net"
 
-	"github.com/sborsh1kmusora/auth/internal/closer"
 	"github.com/sborsh1kmusora/auth/internal/config"
 	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
+	"github.com/sborsh1kmusora/platform_common/pkg/closer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )

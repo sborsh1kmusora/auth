@@ -5,11 +5,11 @@ import (
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/sborsh1kmusora/auth/internal/client/db"
 	"github.com/sborsh1kmusora/auth/internal/model"
 	"github.com/sborsh1kmusora/auth/internal/repository"
 	"github.com/sborsh1kmusora/auth/internal/repository/user/converter"
 	modelRepo "github.com/sborsh1kmusora/auth/internal/repository/user/model"
+	"github.com/sborsh1kmusora/platform_common/pkg/db"
 )
 
 const (
