@@ -1,64 +1,53 @@
 package converter
 
 import (
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sborsh1kmusora/auth/internal/model"
-	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
+	desc "github.com/sborsh1kmusora/auth/pkg/user_v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ToUserDescFromService(user *model.User) *desc.User {
-	var updatedAt *timestamp.Timestamp
+func ToUserInfoFromDesc(desc *desc.UserInfo) *model.UserInfo {
+	return &model.UserInfo{
+		Username: desc.GetUsername(),
+		Password: desc.GetPassword(),
+		Role:     desc.GetRole().String(),
+	}
+}
+
+func ToDescFromUser(user *model.User) *desc.User {
+	var updatedAt *timestamppb.Timestamp
 	if user.UpdatedAt.Valid {
 		updatedAt = timestamppb.New(user.UpdatedAt.Time)
 	}
 
 	return &desc.User{
 		Id:        user.ID,
-		UserInfo:  ToUserInfoFromService(&user.Info),
+		UserInfo:  ToDescFromUserInfo(&user.UserInfo),
 		CreatedAt: timestamppb.New(user.CreatedAt),
 		UpdatedAt: updatedAt,
 	}
 }
 
-func ToUserInfoFromService(info *model.UserInfo) *desc.UserInfo {
+func ToDescFromUserInfo(userInfo *model.UserInfo) *desc.UserInfo {
 	return &desc.UserInfo{
-		Name:    info.Name,
-		Email:   info.Email,
-		IsAdmin: info.IsAdmin,
+		Username: userInfo.Username,
+		Password: userInfo.Password,
+		Role:     toDescRole(userInfo.Role),
 	}
 }
 
-func ToCreateInputFromDesc(info *desc.CreateRequest) *model.CreateInput {
-	return &model.CreateInput{
-		UserInfo:        ToUserInfoFromDesc(info.UserInfo),
-		Password:        info.Password,
-		PasswordConfirm: info.PasswordConfirm,
+func ToUpdateUserFromDesc(desc *desc.UpdateRequest) *model.UpdateUser {
+	return &model.UpdateUser{
+		ID:       desc.GetId(),
+		Username: desc.Username,
+		Password: desc.Password,
 	}
 }
 
-func ToUserInfoFromDesc(info *desc.UserInfo) model.UserInfo {
-	return model.UserInfo{
-		Name:    info.Name,
-		Email:   info.Email,
-		IsAdmin: info.IsAdmin,
-	}
-}
-
-func ToUpdateInputFromDesc(info *desc.UpdateRequest) *model.UpdateInput {
-	var name, email *string
-
-	if info.Name != nil {
-		name = &info.Name.Value
+func toDescRole(role string) desc.Role {
+	if role == "admin" {
+		return desc.Role_ADMIN
 	}
 
-	if info.Email != nil {
-		email = &info.Email.Value
-	}
-
-	return &model.UpdateInput{
-		ID:    info.Id,
-		Name:  name,
-		Email: email,
-	}
+	return desc.Role_USER
 }

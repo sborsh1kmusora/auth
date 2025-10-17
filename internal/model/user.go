@@ -6,26 +6,20 @@ import (
 )
 
 type User struct {
-	ID        int64
-	Info      UserInfo
-	CreatedAt time.Time
-	UpdatedAt sql.NullTime
+	ID        int64        `db:"id"`
+	UserInfo  UserInfo     `db:""`
+	CreatedAt time.Time    `db:"created_at"`
+	UpdatedAt sql.NullTime `db:"updated_at"`
 }
 
 type UserInfo struct {
-	Name    string
-	Email   string
-	IsAdmin bool
+	Username string `db:"username"`
+	Password string `db:"password"`
+	Role     string `db:"role"`
 }
 
-type CreateInput struct {
-	UserInfo        UserInfo
-	Password        string
-	PasswordConfirm string
-}
-
-type UpdateInput struct {
-	ID    int64
-	Name  *string
-	Email *string
+type UpdateUser struct {
+	ID       int64
+	Username *string
+	Password *string
 }
