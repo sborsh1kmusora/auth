@@ -1,16 +1,16 @@
 package user
 
 import (
-	"github.com/sborsh1kmusora/auth/internal/service"
-	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
+	"github.com/sborsh1kmusora/auth/internal/service/user"
+	desc "github.com/sborsh1kmusora/auth/pkg/user_v1"
 )
 
 type Implementation struct {
-	desc.UnimplementedAuthV1Server
-	userService service.UserService
+	desc.UnimplementedUserV1Server
+	userService user.Service
 }
 
-func NewImplementation(userService service.UserService) *Implementation {
+func NewImplementation(userService user.Service) *Implementation {
 	return &Implementation{
 		userService: userService,
 	}

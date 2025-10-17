@@ -17,6 +17,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Clean workspace
+        run: |
+          git clean -fdx
+          go clean -cache -modcache -testcache
+
       - name: Cache Go modules
         uses: actions/cache@v4
         with:

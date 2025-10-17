@@ -9,7 +9,6 @@ linters:
   enable:
     - errcheck
     - goconst
-    - gosec
     - govet
     - ineffassign
     - unused

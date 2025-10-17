@@ -6,7 +6,8 @@ import (
 	"net"
 
 	"github.com/sborsh1kmusora/auth/internal/config"
-	desc "github.com/sborsh1kmusora/auth/pkg/auth_v1"
+	descAuthV1 "github.com/sborsh1kmusora/auth/pkg/auth_v1"
+	descUserV1 "github.com/sborsh1kmusora/auth/pkg/user_v1"
 	"github.com/sborsh1kmusora/platform_common/pkg/closer"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -37,38 +38,34 @@ func (a *App) Run() error {
 }
 
 func (a *App) initDeps(ctx context.Context) error {
-	inits := []func(context.Context) error{
+	inits := []func(context.Context){
 		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 	}
 
 	for _, f := range inits {
-		if err := f(ctx); err != nil {
-			return err
-		}
+		f(ctx)
 	}
 
 	return nil
 }
 
-func (a *App) initConfig(ctx context.Context) error {
+func (a *App) initConfig(ctx context.Context) {
 	config.Load(".env")
-	return nil
 }
 
-func (a *App) initServiceProvider(ctx context.Context) error {
+func (a *App) initServiceProvider(ctx context.Context) {
 	a.serviceProvider = newServiceProvider()
-	return nil
 }
 
-func (a *App) initGRPCServer(ctx context.Context) error {
+func (a *App) initGRPCServer(ctx context.Context) {
 	a.grpcServer = grpc.NewServer()
 	reflection.Register(a.grpcServer)
 
-	desc.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))
-
-	return nil
+	descUserV1.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))
+	descAuthV1.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
+	//descAccessV1.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
 }
 
 func (a *App) runGRPCServer() error {
