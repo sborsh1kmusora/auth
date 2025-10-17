@@ -6,20 +6,25 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/sborsh1kmusora/auth/internal/model"
-	"github.com/sborsh1kmusora/auth/internal/repository"
-	"github.com/sborsh1kmusora/auth/internal/repository/user/converter"
-	modelRepo "github.com/sborsh1kmusora/auth/internal/repository/user/model"
+	"github.com/sborsh1kmusora/auth/internal/utils"
 	"github.com/sborsh1kmusora/platform_common/pkg/db"
 )
 
+type Repository interface {
+	Create(ctx context.Context, in *model.UserInfo) (int64, error)
+	GetByUsername(ctx context.Context, username string) (*model.UserInfo, error)
+	Get(ctx context.Context, id int64) (*model.User, error)
+	Update(ctx context.Context, user *model.UpdateUser) error
+	Delete(ctx context.Context, id int64) error
+}
+
 const (
-	tableName = "user_info"
+	tableName = "users"
 
 	idColumn        = "id"
-	nameColumn      = "name"
-	emailColumn     = "email"
+	usernameColumn  = "username"
 	passwordColumn  = "password"
-	isAdminColumn   = "is_admin"
+	roleColumn      = "role"
 	createdAtColumn = "created_at"
 	updatedAtColumn = "updated_at"
 )
@@ -28,17 +33,22 @@ type repo struct {
 	db db.Client
 }
 
-func NewRepository(db db.Client) repository.UserRepository {
+func NewRepository(db db.Client) Repository {
 	return &repo{
 		db: db,
 	}
 }
 
-func (r *repo) Create(ctx context.Context, in *model.CreateInput) (int64, error) {
+func (r *repo) Create(ctx context.Context, in *model.UserInfo) (int64, error) {
+	hashPassword, err := utils.HashPassword(in.Password)
+	if err != nil {
+		return 0, err
+	}
+
 	builder := sq.Insert(tableName).
 		PlaceholderFormat(sq.Dollar).
-		Columns(nameColumn, emailColumn, isAdminColumn, passwordColumn).
-		Values(in.UserInfo.Name, in.UserInfo.Email, in.UserInfo.IsAdmin, in.Password).
+		Columns(usernameColumn, passwordColumn, roleColumn, createdAtColumn).
+		Values(in.Username, hashPassword, in.Role, time.Now()).
 		Suffix("RETURNING id")
 
 	query, args, err := builder.ToSql()
@@ -63,9 +73,9 @@ func (r *repo) Create(ctx context.Context, in *model.CreateInput) (int64, error)
 func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 	builder := sq.Select(
 		idColumn,
-		nameColumn,
-		emailColumn,
-		isAdminColumn,
+		usernameColumn,
+		passwordColumn,
+		roleColumn,
 		createdAtColumn,
 		updatedAtColumn,
 	).
@@ -82,27 +92,52 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		QueryRow: query,
 	}
 
-	var user modelRepo.User
-	err = r.db.DB().ScanOneContext(ctx, &user, q, args...)
+	user := new(model.User)
+	err = r.db.DB().ScanOneContext(ctx, user, q, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	return converter.ToUserFromRepo(&user), nil
+	return user, nil
 }
 
-func (r *repo) Update(ctx context.Context, in *model.UpdateInput) error {
-	updateBuilder := sq.Update("user_info").
+func (r *repo) GetByUsername(ctx context.Context, username string) (*model.UserInfo, error) {
+	builder := sq.Select(usernameColumn, passwordColumn, roleColumn).
 		PlaceholderFormat(sq.Dollar).
-		Set("updated_at", time.Now()).
-		Where(sq.Eq{"id": in.ID})
+		From(tableName).
+		Where(sq.Eq{usernameColumn: username})
 
-	if in.Name != nil {
-		updateBuilder = updateBuilder.Set("name", in.Name)
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
 	}
 
-	if in.Email != nil {
-		updateBuilder = updateBuilder.Set("email", in.Email)
+	q := db.Query{
+		Name:     "users.GetByUsername",
+		QueryRow: query,
+	}
+
+	user := new(model.UserInfo)
+	err = r.db.DB().ScanOneContext(ctx, user, q, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *repo) Update(ctx context.Context, in *model.UpdateUser) error {
+	updateBuilder := sq.Update(tableName).
+		PlaceholderFormat(sq.Dollar).
+		Set(updatedAtColumn, time.Now()).
+		Where(sq.Eq{idColumn: in.ID})
+
+	if in.Username != nil {
+		updateBuilder = updateBuilder.Set(usernameColumn, in.Username)
+	}
+
+	if in.Password != nil {
+		updateBuilder = updateBuilder.Set(passwordColumn, in.Password)
 	}
 
 	query, args, err := updateBuilder.ToSql()
@@ -124,7 +159,7 @@ func (r *repo) Update(ctx context.Context, in *model.UpdateInput) error {
 }
 
 func (r *repo) Delete(ctx context.Context, id int64) error {
-	builder := sq.Delete("user_info").
+	builder := sq.Delete(tableName).
 		PlaceholderFormat(sq.Dollar).
 		Where(sq.Eq{idColumn: id})
 

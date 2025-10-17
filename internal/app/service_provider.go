@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 
+	"github.com/sborsh1kmusora/auth/internal/api/auth"
 	"github.com/sborsh1kmusora/auth/internal/api/user"
 	"github.com/sborsh1kmusora/auth/internal/config"
-	"github.com/sborsh1kmusora/auth/internal/repository"
 	userRepo "github.com/sborsh1kmusora/auth/internal/repository/user"
-	"github.com/sborsh1kmusora/auth/internal/service"
+	authService "github.com/sborsh1kmusora/auth/internal/service/auth"
 	userService "github.com/sborsh1kmusora/auth/internal/service/user"
 	"github.com/sborsh1kmusora/platform_common/pkg/closer"
 	"github.com/sborsh1kmusora/platform_common/pkg/db"
@@ -19,14 +19,17 @@ import (
 type serviceProvider struct {
 	pgConfig   config.PGConfig
 	grpcConfig config.GRPCConfig
+	authConfig config.AuthConfig
 
 	dbClient  db.Client
 	txManager db.TxManager
-	userRepo  repository.UserRepository
+	userRepo  userRepo.Repository
 
-	userService service.UserService
+	userService userService.Service
+	authService authService.Service
 
 	userImpl *user.Implementation
+	authImpl *auth.Implementation
 }
 
 func newServiceProvider() *serviceProvider {
@@ -59,6 +62,19 @@ func (s *serviceProvider) PGConfig() config.PGConfig {
 	return s.pgConfig
 }
 
+func (s *serviceProvider) AuthConfig() config.AuthConfig {
+	if s.authConfig == nil {
+		cfg, err := config.NewAuthConfig()
+		if err != nil {
+			log.Fatalf("failed to get auth config: %v", err)
+		}
+
+		s.authConfig = cfg
+	}
+
+	return s.authConfig
+}
+
 func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN())
@@ -86,7 +102,7 @@ func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
 	return s.txManager
 }
 
-func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRepository {
+func (s *serviceProvider) UserRepository(ctx context.Context) userRepo.Repository {
 	if s.userRepo == nil {
 		s.userRepo = userRepo.NewRepository(s.DBClient(ctx))
 	}
@@ -94,7 +110,7 @@ func (s *serviceProvider) UserRepository(ctx context.Context) repository.UserRep
 	return s.userRepo
 }
 
-func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
+func (s *serviceProvider) UserService(ctx context.Context) userService.Service {
 	if s.userService == nil {
 		s.userService = userService.NewService(
 			s.UserRepository(ctx),
@@ -105,10 +121,29 @@ func (s *serviceProvider) UserService(ctx context.Context) service.UserService {
 	return s.userService
 }
 
+func (s *serviceProvider) AuthService(ctx context.Context) authService.Service {
+	if s.authService == nil {
+		s.authService = authService.NewService(
+			s.AuthConfig(),
+			s.UserRepository(ctx),
+		)
+	}
+
+	return s.authService
+}
+
 func (s *serviceProvider) UserImpl(ctx context.Context) *user.Implementation {
 	if s.userImpl == nil {
 		s.userImpl = user.NewImplementation(s.UserService(ctx))
 	}
 
 	return s.userImpl
+}
+
+func (s *serviceProvider) AuthImpl(ctx context.Context) *auth.Implementation {
+	if s.authImpl == nil {
+		s.authImpl = auth.NewAuthImplementation(s.AuthService(ctx))
+	}
+
+	return s.authImpl
 }
