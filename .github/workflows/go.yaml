@@ -17,11 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clean workspace
-        run: |
-          git clean -fdx
-          go clean -cache -modcache -testcache
-
       - name: Cache Go modules
         uses: actions/cache@v4
         with:
@@ -31,11 +26,6 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.24.5'
 
       - name: Build
         run: go build -o ./bin/ -v ./...

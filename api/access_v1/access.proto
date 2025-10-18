@@ -1,15 +1,17 @@
 syntax = "proto3";
 
-package auth_v1;
-
-import "google/protobuf/empty.proto";
+package access_v1;
 
 option go_package = "github.com/sborsh1kmusora/auth/pkg/access_v1;access_v1";
 
 service AccessV1 {
-  rpc Check (CheckRequest) returns (google.protobuf.Empty);
+  rpc Check (CheckRequest) returns (CheckResponse);
 }
 
 message CheckRequest {
   string endpoint_address = 1;
+}
+
+message CheckResponse {
+  bool is_allowed = 1;
 }
