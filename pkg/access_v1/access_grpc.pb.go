@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -20,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AccessV1_Check_FullMethodName = "/auth_v1.AccessV1/Check"
+	AccessV1_Check_FullMethodName = "/access_v1.AccessV1/Check"
 )
 
 // AccessV1Client is the client API for AccessV1 service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AccessV1Client interface {
-	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error)
 }
 
 type accessV1Client struct {
@@ -38,9 +37,9 @@ func NewAccessV1Client(cc grpc.ClientConnInterface) AccessV1Client {
 	return &accessV1Client{cc}
 }
 
-func (c *accessV1Client) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *accessV1Client) Check(ctx context.Context, in *CheckRequest, opts ...grpc.CallOption) (*CheckResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(CheckResponse)
 	err := c.cc.Invoke(ctx, AccessV1_Check_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -52,7 +51,7 @@ func (c *accessV1Client) Check(ctx context.Context, in *CheckRequest, opts ...gr
 // All implementations must embed UnimplementedAccessV1Server
 // for forward compatibility.
 type AccessV1Server interface {
-	Check(context.Context, *CheckRequest) (*emptypb.Empty, error)
+	Check(context.Context, *CheckRequest) (*CheckResponse, error)
 	mustEmbedUnimplementedAccessV1Server()
 }
 
@@ -63,7 +62,7 @@ type AccessV1Server interface {
 // pointer dereference when methods are called.
 type UnimplementedAccessV1Server struct{}
 
-func (UnimplementedAccessV1Server) Check(context.Context, *CheckRequest) (*emptypb.Empty, error) {
+func (UnimplementedAccessV1Server) Check(context.Context, *CheckRequest) (*CheckResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
 }
 func (UnimplementedAccessV1Server) mustEmbedUnimplementedAccessV1Server() {}
@@ -109,7 +108,7 @@ func _AccessV1_Check_Handler(srv interface{}, ctx context.Context, dec func(inte
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var AccessV1_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "auth_v1.AccessV1",
+	ServiceName: "access_v1.AccessV1",
 	HandlerType: (*AccessV1Server)(nil),
 	Methods: []grpc.MethodDesc{
 		{

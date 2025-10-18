@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/sborsh1kmusora/auth/internal/config"
+	descAccessV1 "github.com/sborsh1kmusora/auth/pkg/access_v1"
 	descAuthV1 "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	descUserV1 "github.com/sborsh1kmusora/auth/pkg/user_v1"
 	"github.com/sborsh1kmusora/platform_common/pkg/closer"
@@ -65,7 +66,7 @@ func (a *App) initGRPCServer(ctx context.Context) {
 
 	descUserV1.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))
 	descAuthV1.RegisterAuthV1Server(a.grpcServer, a.serviceProvider.AuthImpl(ctx))
-	//descAccessV1.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
+	descAccessV1.RegisterAccessV1Server(a.grpcServer, a.serviceProvider.AccessImpl(ctx))
 }
 
 func (a *App) runGRPCServer() error {
