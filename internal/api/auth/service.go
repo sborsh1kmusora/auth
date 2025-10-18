@@ -10,7 +10,7 @@ type Implementation struct {
 	authService auth.Service
 }
 
-func NewAuthImplementation(authService auth.Service) *Implementation {
+func NewImplementation(authService auth.Service) *Implementation {
 	return &Implementation{
 		authService: authService,
 	}

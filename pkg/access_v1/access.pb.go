@@ -9,7 +9,6 @@ package access_v1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -66,15 +65,62 @@ func (x *CheckRequest) GetEndpointAddress() string {
 	return ""
 }
 
+type CheckResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	IsAllowed     bool                   `protobuf:"varint,1,opt,name=is_allowed,json=isAllowed,proto3" json:"is_allowed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckResponse) Reset() {
+	*x = CheckResponse{}
+	mi := &file_access_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckResponse) ProtoMessage() {}
+
+func (x *CheckResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_access_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckResponse.ProtoReflect.Descriptor instead.
+func (*CheckResponse) Descriptor() ([]byte, []int) {
+	return file_access_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CheckResponse) GetIsAllowed() bool {
+	if x != nil {
+		return x.IsAllowed
+	}
+	return false
+}
+
 var File_access_proto protoreflect.FileDescriptor
 
 const file_access_proto_rawDesc = "" +
 	"\n" +
-	"\faccess.proto\x12\aauth_v1\x1a\x1bgoogle/protobuf/empty.proto\"9\n" +
+	"\faccess.proto\x12\taccess_v1\"9\n" +
 	"\fCheckRequest\x12)\n" +
-	"\x10endpoint_address\x18\x01 \x01(\tR\x0fendpointAddress2B\n" +
-	"\bAccessV1\x126\n" +
-	"\x05Check\x12\x15.auth_v1.CheckRequest\x1a\x16.google.protobuf.EmptyB8Z6github.com/sborsh1kmusora/auth/pkg/access_v1;access_v1b\x06proto3"
+	"\x10endpoint_address\x18\x01 \x01(\tR\x0fendpointAddress\".\n" +
+	"\rCheckResponse\x12\x1d\n" +
+	"\n" +
+	"is_allowed\x18\x01 \x01(\bR\tisAllowed2F\n" +
+	"\bAccessV1\x12:\n" +
+	"\x05Check\x12\x17.access_v1.CheckRequest\x1a\x18.access_v1.CheckResponseB8Z6github.com/sborsh1kmusora/auth/pkg/access_v1;access_v1b\x06proto3"
 
 var (
 	file_access_proto_rawDescOnce sync.Once
@@ -88,14 +134,14 @@ func file_access_proto_rawDescGZIP() []byte {
 	return file_access_proto_rawDescData
 }
 
-var file_access_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_access_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_access_proto_goTypes = []any{
-	(*CheckRequest)(nil),  // 0: auth_v1.CheckRequest
-	(*emptypb.Empty)(nil), // 1: google.protobuf.Empty
+	(*CheckRequest)(nil),  // 0: access_v1.CheckRequest
+	(*CheckResponse)(nil), // 1: access_v1.CheckResponse
 }
 var file_access_proto_depIdxs = []int32{
-	0, // 0: auth_v1.AccessV1.Check:input_type -> auth_v1.CheckRequest
-	1, // 1: auth_v1.AccessV1.Check:output_type -> google.protobuf.Empty
+	0, // 0: access_v1.AccessV1.Check:input_type -> access_v1.CheckRequest
+	1, // 1: access_v1.AccessV1.Check:output_type -> access_v1.CheckResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -114,7 +160,7 @@ func file_access_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_access_proto_rawDesc), len(file_access_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
