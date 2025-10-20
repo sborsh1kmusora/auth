@@ -6,6 +6,7 @@ import (
 	"net"
 
 	"github.com/sborsh1kmusora/auth/internal/config"
+	"github.com/sborsh1kmusora/auth/internal/interceptor"
 	descAccessV1 "github.com/sborsh1kmusora/auth/pkg/access_v1"
 	descAuthV1 "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	descUserV1 "github.com/sborsh1kmusora/auth/pkg/user_v1"
@@ -61,7 +62,9 @@ func (a *App) initServiceProvider(ctx context.Context) {
 }
 
 func (a *App) initGRPCServer(ctx context.Context) {
-	a.grpcServer = grpc.NewServer()
+	a.grpcServer = grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+	)
 	reflection.Register(a.grpcServer)
 
 	descUserV1.RegisterUserV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))
