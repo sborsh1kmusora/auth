@@ -4,6 +4,7 @@ package user_v1;
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
+import "validate/validate.proto";
 
 option go_package = "github.com/sborsh1kmusora/auth/pkg/user_v1;user_v1";
 
@@ -32,8 +33,14 @@ message GetResponse {
 
 message UpdateRequest {
   int64 id = 1;
-  optional string username = 2;
-  optional string password = 3;
+  optional string username = 2 [(validate.rules).string = {
+    min_len: 4,
+    max_len: 32,
+  }];
+  optional string password = 3 [(validate.rules).string = {
+    min_len: 8,
+    max_len: 32,
+  }];
 }
 
 message DeleteRequest {
@@ -46,9 +53,17 @@ enum Role {
 }
 
 message UserInfo {
-  string username = 1;
-  string password = 2;
-  Role role = 3;
+  string username = 1 [(validate.rules).string = {
+    min_len: 4,
+    max_len: 32,
+  }];
+  string password = 2 [(validate.rules).string = {
+    min_len: 8,
+    max_len: 32,
+  }];
+  Role role = 3 [(validate.rules).enum = {
+    in: [0, 1]
+  }];
 }
 
 message User {
