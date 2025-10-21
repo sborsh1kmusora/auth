@@ -2,12 +2,12 @@ package app
 
 import (
 	"context"
-	"log"
 
 	"github.com/sborsh1kmusora/auth/internal/api/access"
 	"github.com/sborsh1kmusora/auth/internal/api/auth"
 	"github.com/sborsh1kmusora/auth/internal/api/user"
 	"github.com/sborsh1kmusora/auth/internal/config"
+	"github.com/sborsh1kmusora/auth/internal/logger"
 	accessRepo "github.com/sborsh1kmusora/auth/internal/repository/access"
 	userRepo "github.com/sborsh1kmusora/auth/internal/repository/user"
 	accessService "github.com/sborsh1kmusora/auth/internal/service/access"
@@ -17,6 +17,7 @@ import (
 	"github.com/sborsh1kmusora/platform_common/pkg/db"
 	"github.com/sborsh1kmusora/platform_common/pkg/db/pg"
 	"github.com/sborsh1kmusora/platform_common/pkg/db/transaction"
+	"go.uber.org/zap"
 )
 
 type serviceProvider struct {
@@ -46,7 +47,7 @@ func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
 	if s.grpcConfig == nil {
 		cfg, err := config.NewGRPCConfig()
 		if err != nil {
-			log.Fatalf("failed to get grpc config: %v", err)
+			logger.Fatal("Failed to initialize grpc config", zap.Error(err))
 		}
 
 		s.grpcConfig = cfg
@@ -59,7 +60,7 @@ func (s *serviceProvider) PGConfig() config.PGConfig {
 	if s.pgConfig == nil {
 		cfg, err := config.NewPGConfig()
 		if err != nil {
-			log.Fatalf("failed to get pg config: %v", err)
+			logger.Fatal("Failed to initialize pg config", zap.Error(err))
 		}
 
 		s.pgConfig = cfg
@@ -72,7 +73,7 @@ func (s *serviceProvider) AuthConfig() config.AuthConfig {
 	if s.authConfig == nil {
 		cfg, err := config.NewAuthConfig()
 		if err != nil {
-			log.Fatalf("failed to get auth config: %v", err)
+			logger.Fatal("Failed to initialize auth config", zap.Error(err))
 		}
 
 		s.authConfig = cfg
@@ -85,12 +86,12 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	if s.dbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
-			log.Fatalf("failed to connect to database: %v", err)
+			logger.Fatal("Failed to initialize db client", zap.Error(err))
 		}
 
 		err = cl.DB().Ping(ctx)
 		if err != nil {
-			log.Fatalf("failed to ping database: %v", err)
+			logger.Fatal("Failed to ping db", zap.Error(err))
 		}
 		closer.Add(cl.Close)
 
