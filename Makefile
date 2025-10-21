@@ -13,7 +13,8 @@ install-deps:
 	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.9
 	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.5.1
 	GOBIN=$(LOCAL_BIN) go install github.com/pressly/goose/v3/cmd/goose@v3.25.0
-	GOBIN=$(LOCAL_BIN) go install  github.com/envoyproxy/protoc-gen-validate@v1.2.1
+	GOBIN=$(LOCAL_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.2.1
+	GOBIN=$(LOCAL_BIN) go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.27.3
 
 migration-status:
 	${LOCAL_BIN}/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
@@ -43,6 +44,8 @@ generate-user-api:
 	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 	--validate_out lang=go:pkg/user_v1 --validate_opt=paths=source_relative \
 	--plugin=protoc-gen-validate=bin/protoc-gen-validate \
+	--openapiv2_out=allow_merge=true,merge_file_name=api:pkg/swagger \
+    --plugin=protoc-gen-openapiv2=bin/protoc-gen-openapiv2 \
 	api/user_v1/user.proto
 
 generate-auth-api:
@@ -79,3 +82,9 @@ vendor-proto:
 			mv vendor.protogen/protoc-gen-validate/validate/*.proto vendor.protogen/validate &&\
 			rm -rf vendor.protogen/protoc-gen-validate ;\
 		fi
+		@if [ ! -d vendor.protogen/protoc-gen-openapiv2 ]; then \
+        	mkdir -p vendor.protogen/protoc-gen-openapiv2/options &&\
+          	git clone https://github.com/grpc-ecosystem/grpc-gateway vendor.protogen/openapiv2 &&\
+        	mv vendor.protogen/openapiv2/protoc-gen-openapiv2/options/*.proto vendor.protogen/protoc-gen-openapiv2/options &&\
+        	rm -rf vendor.protogen/openapiv2 ;\
+        fi

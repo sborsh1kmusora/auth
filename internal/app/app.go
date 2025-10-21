@@ -2,15 +2,17 @@ package app
 
 import (
 	"context"
-	"log"
 	"net"
 
+	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/sborsh1kmusora/auth/internal/config"
 	"github.com/sborsh1kmusora/auth/internal/interceptor"
+	"github.com/sborsh1kmusora/auth/internal/logger"
 	descAccessV1 "github.com/sborsh1kmusora/auth/pkg/access_v1"
 	descAuthV1 "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	descUserV1 "github.com/sborsh1kmusora/auth/pkg/user_v1"
 	"github.com/sborsh1kmusora/platform_common/pkg/closer"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
@@ -63,7 +65,12 @@ func (a *App) initServiceProvider(ctx context.Context) {
 
 func (a *App) initGRPCServer(ctx context.Context) {
 	a.grpcServer = grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.ValidateInterceptor),
+		grpc.UnaryInterceptor(
+			grpcMiddleware.ChainUnaryServer(
+				interceptor.LogInterceptor,
+				interceptor.ValidateInterceptor,
+			),
+		),
 	)
 	reflection.Register(a.grpcServer)
 
@@ -73,7 +80,7 @@ func (a *App) initGRPCServer(ctx context.Context) {
 }
 
 func (a *App) runGRPCServer() error {
-	log.Printf("GRPC server is running on %s", a.serviceProvider.GRPCConfig().Address())
+	logger.Info("GRPC server is running on", zap.String("address", a.serviceProvider.GRPCConfig().Address()))
 
 	lis, err := net.Listen("tcp", a.serviceProvider.GRPCConfig().Address())
 	if err != nil {

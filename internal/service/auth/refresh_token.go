@@ -10,13 +10,11 @@ import (
 func (s *serv) RefreshToken(ctx context.Context, refreshToken string) (string, error) {
 	claims, err := utils.VerifyToken(refreshToken, s.authConfig.RefreshTokenSecretKey())
 	if err != nil {
-		log.Printf("failed to verify refresh token: %v", err)
 		return "", err
 	}
 
 	user, err := s.userRepository.GetByUsername(ctx, claims.Username)
 	if err != nil {
-		log.Printf("failed to get user by username: %v", err)
 		return "", err
 	}
 

@@ -2,12 +2,19 @@ package user
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v5/pgconn"
+	appError "github.com/sborsh1kmusora/auth/internal/errors"
+	"github.com/sborsh1kmusora/auth/internal/logger"
 	"github.com/sborsh1kmusora/auth/internal/model"
 	"github.com/sborsh1kmusora/auth/internal/utils"
 	"github.com/sborsh1kmusora/platform_common/pkg/db"
+	"github.com/sborsh1kmusora/platform_common/pkg/db/prettier"
+	"go.uber.org/zap"
 )
 
 type Repository interface {
@@ -61,9 +68,20 @@ func (r *repo) Create(ctx context.Context, in *model.UserInfo) (int64, error) {
 		QueryRow: query,
 	}
 
+	logger.Debug("Executing query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)),
+	)
+
 	var id int64
 	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&id)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" {
+				return 0, appError.ErrUserAlreadyExists
+			}
+		}
 		return 0, err
 	}
 
@@ -92,6 +110,11 @@ func (r *repo) Get(ctx context.Context, id int64) (*model.User, error) {
 		QueryRow: query,
 	}
 
+	logger.Debug("Executing query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)),
+	)
+
 	user := new(model.User)
 	err = r.db.DB().ScanOneContext(ctx, user, q, args...)
 	if err != nil {
@@ -117,9 +140,17 @@ func (r *repo) GetByUsername(ctx context.Context, username string) (*model.UserI
 		QueryRow: query,
 	}
 
+	logger.Debug("Executing query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)),
+	)
+
 	user := new(model.UserInfo)
 	err = r.db.DB().ScanOneContext(ctx, user, q, args...)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, appError.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -150,6 +181,10 @@ func (r *repo) Update(ctx context.Context, in *model.UpdateUser) error {
 		QueryRow: query,
 	}
 
+	logger.Debug("Executing query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)),
+	)
 	_, err = r.db.DB().ExecContext(ctx, q, args...)
 	if err != nil {
 		return err
@@ -172,6 +207,11 @@ func (r *repo) Delete(ctx context.Context, id int64) error {
 		Name:     "user_repository.Delete",
 		QueryRow: query,
 	}
+
+	logger.Debug("Executing query",
+		zap.String("sql", q.Name),
+		zap.String("query", prettier.Pretty(q.QueryRow, prettier.PlaceholderDollar, args...)),
+	)
 
 	if _, err = r.db.DB().ExecContext(ctx, q, args...); err != nil {
 		return err
