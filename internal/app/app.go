@@ -2,20 +2,30 @@ package app
 
 import (
 	"context"
+	"flag"
+	"log"
 	"net"
+	"net/http"
+	"os"
 
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sborsh1kmusora/auth/internal/config"
 	"github.com/sborsh1kmusora/auth/internal/interceptor"
 	"github.com/sborsh1kmusora/auth/internal/logger"
+	"github.com/sborsh1kmusora/auth/internal/metrics"
 	descAccessV1 "github.com/sborsh1kmusora/auth/pkg/access_v1"
 	descAuthV1 "github.com/sborsh1kmusora/auth/pkg/auth_v1"
 	descUserV1 "github.com/sborsh1kmusora/auth/pkg/user_v1"
 	"github.com/sborsh1kmusora/platform_common/pkg/closer"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+var logLevel = flag.String("l", "debug", "log level")
 
 type App struct {
 	serviceProvider *serviceProvider
@@ -38,6 +48,13 @@ func (a *App) Run() error {
 		closer.Wait()
 	}()
 
+	go func() {
+		err := a.runPrometheus()
+		if err != nil {
+			logger.Fatal("Failed to run prometheus server", zap.Error(err))
+		}
+	}()
+
 	return a.runGRPCServer()
 }
 
@@ -46,6 +63,8 @@ func (a *App) initDeps(ctx context.Context) error {
 		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
+		a.initMetrics,
+		a.initLog,
 	}
 
 	for _, f := range inits {
@@ -55,12 +74,20 @@ func (a *App) initDeps(ctx context.Context) error {
 	return nil
 }
 
-func (a *App) initConfig(ctx context.Context) {
+func (a *App) initConfig(_ context.Context) {
 	config.Load(".env")
+}
+
+func (a *App) initMetrics(_ context.Context) {
+	metrics.Init()
 }
 
 func (a *App) initServiceProvider(ctx context.Context) {
 	a.serviceProvider = newServiceProvider()
+}
+
+func (a *App) initLog(ctx context.Context) {
+	logger.Init(getCore(getAtomicLevel()))
 }
 
 func (a *App) initGRPCServer(ctx context.Context) {
@@ -69,6 +96,7 @@ func (a *App) initGRPCServer(ctx context.Context) {
 			grpcMiddleware.ChainUnaryServer(
 				interceptor.LogInterceptor,
 				interceptor.ValidateInterceptor,
+				interceptor.MetricsInterceptor,
 			),
 		),
 	)
@@ -92,4 +120,57 @@ func (a *App) runGRPCServer() error {
 	}
 
 	return nil
+}
+
+func (a *App) runPrometheus() error {
+	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
+
+	prometheusServer := &http.Server{
+		Addr:    "localhost:2112",
+		Handler: mux,
+	}
+
+	logger.Info("Prometheus is running on", zap.String("address", prometheusServer.Addr))
+
+	if err := prometheusServer.ListenAndServe(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getCore(level zap.AtomicLevel) zapcore.Core {
+	stdout := zapcore.AddSync(os.Stdout)
+
+	file := zapcore.AddSync(&lumberjack.Logger{
+		Filename:   "logs/app.log",
+		MaxSize:    10,
+		MaxBackups: 3,
+		MaxAge:     7,
+	})
+
+	productionCfg := zap.NewProductionEncoderConfig()
+	productionCfg.TimeKey = "timestamp"
+	productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+
+	return zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, stdout, level),
+		zapcore.NewCore(fileEncoder, file, level),
+	)
+}
+
+func getAtomicLevel() zap.AtomicLevel {
+	var level zapcore.Level
+	if err := level.Set(*logLevel); err != nil {
+		log.Fatalf("failed to set log level: %v", err)
+	}
+
+	return zap.NewAtomicLevelAt(level)
 }

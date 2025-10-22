@@ -19,7 +19,7 @@ func LogInterceptor(
 
 	res, err := handler(ctx, req)
 	if err == nil {
-		logger.Info("Success", zap.String("method", info.FullMethod), zap.Any("req", req), zap.Any("res", res), zap.Duration("duration", time.Since(now)))
+		logger.Debug("Success", zap.String("method", info.FullMethod), zap.Any("req", req), zap.Any("res", res), zap.Duration("duration", time.Since(now)))
 	}
 
 	return res, err
