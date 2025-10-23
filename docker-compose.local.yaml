@@ -30,9 +30,16 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana-oss:12.2.0-17142428006
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
 
 volumes:
   postgres_volume:
   prometheus_data:
+  grafana_data:

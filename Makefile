@@ -95,7 +95,19 @@ grpc-load-test:
 	ghz \
     	--proto api/user_v1/user.proto \
     	--call user_v1.UserV1/Get \
-    	--data '{"id": 2}' \
+    	--data '{"id": 1}' \
+    	--rps 100 \
+    	--total 3000 \
+    	--insecure \
+    	localhost:50051
+
+grpc-error-load-test:
+	@mkdir -p api/validate
+	@cp -f vendor.protogen/validate/validate.proto api/user_v1/validate/validate.proto
+	ghz \
+    	--proto api/user_v1/user.proto \
+    	--call user_v1.UserV1/Get \
+    	--data '{"id": 0}' \
     	--rps 100 \
     	--total 3000 \
     	--insecure \
