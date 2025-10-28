@@ -1,15 +1,26 @@
 services:
-  auth:
-    image: ${REGISTRY}/${IMAGE_NAME}:${TAG_NAME}
-    env_file:
-      - .env
+  app:
+    container_name: auth
+    build:
+      context: .
+      dockerfile: prod.Dockerfile
     ports:
       - "50051:50051"
+    env_file: .env
+    environment:
+      - APP_ENV=prod
+    volumes:
+      - ./logs:/app/logs
+    labels:
+      co.elastic.logs/enabled: "true"
     depends_on:
-      - pg
-    restart: unless-stopped
+      pg:
+        condition: service_healthy
+    networks:
+      - auth_net
 
   pg:
+    container_name: pg
     image: postgres:15-alpine3.22
     env_file:
       - .env
@@ -25,18 +36,104 @@ services:
       test: [ "CMD-SHELL", "pg_isready -U $PG_USER" ]
       interval: 5s
       retries: 5
+    networks:
+      - auth_net
 
   migrator:
+    container_name: migrator
     build:
       context: .
       dockerfile: migration.Dockerfile
     restart: on-failure
     environment:
       DB_HOST: pg
-    depends_on:
-      pg:
-        condition: service_healthy
+    networks:
+      - auth_net
 
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v3.7.2
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - auth_net
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana-oss:12.2.0-17142428006
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - auth_net
+
+  elasticsearch:
+    container_name: elastic
+    image: elasticsearch:8.19.6
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - network.host=0.0.0.0
+    ports:
+      - "9200:9200"
+    networks:
+      - auth_net
+
+  kibana:
+    container_name: kibana
+    image: kibana:8.19.6
+    volumes:
+      - ./kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    environment:
+      - TELEMETRY_OPT_IN=false
+    depends_on:
+      - elasticsearch
+    networks:
+      - auth_net
+
+  logstash:
+    container_name: logstash
+    image: logstash:8.19.6
+    volumes:
+      - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+    ports:
+      - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks:
+      - auth_net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9600/_node/pipelines" ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
+  filebeat:
+    container_name: filebeat
+    image: elastic/filebeat:8.19.6
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs:/app/logs:ro
+    depends_on:
+      logstash:
+        condition: service_healthy
+    networks:
+      - auth_net
 
 volumes:
   postgres_volume:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  auth_net:
+    driver: bridge

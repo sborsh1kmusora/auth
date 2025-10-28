@@ -1,13 +1,12 @@
 package config
 
 import (
-	"log"
-
 	"github.com/joho/godotenv"
+	"github.com/sborsh1kmusora/auth/internal/logger"
 )
 
 func Load(path string) {
 	if err := godotenv.Load(path); err != nil {
-		log.Printf("No .env file found at %s — using system environment", path)
+		logger.Warn("Error loading .env file - read system environment")
 	}
 }
