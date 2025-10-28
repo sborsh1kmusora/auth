@@ -178,3 +178,12 @@ func getProdCore(level zap.AtomicLevel) zapcore.Core {
 		zapcore.NewCore(jsonEncoder, file, level),
 	)
 }
+
+func getAtomicLevel() zap.AtomicLevel {
+	var level zapcore.Level
+	if err := level.Set(*logLevel); err != nil {
+		log.Fatalf("failed to set log level: %v", err)
+	}
+
+	return zap.NewAtomicLevelAt(level)
+}
