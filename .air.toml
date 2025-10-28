@@ -1,0 +1,11 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./tmp/auth_server ./cmd/grpc_server"
+bin = "tmp/auth_server"
+include_ext = ["go", "mod", "sum"]
+exclude_dir = ["vendor", "tmp", "migrations"]
+
+[log]
+time = true

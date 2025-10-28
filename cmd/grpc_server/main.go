@@ -2,16 +2,13 @@ package main
 
 import (
 	"context"
-	"flag"
 
 	"github.com/sborsh1kmusora/auth/internal/app"
 	"github.com/sborsh1kmusora/auth/internal/logger"
 	"go.uber.org/zap"
 )
- 
-func main() {
-	flag.Parse()
 
+func main() {
 	ctx := context.Background()
 
 	a, err := app.NewApp(ctx)

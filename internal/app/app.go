@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"flag"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -24,8 +22,6 @@ import (
 	"google.golang.org/grpc/reflection"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
-
-var logLevel = flag.String("l", "debug", "log level")
 
 type App struct {
 	serviceProvider *serviceProvider
@@ -60,11 +56,11 @@ func (a *App) Run() error {
 
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context){
+		a.initLog,
 		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 		a.initMetrics,
-		a.initLog,
 	}
 
 	for _, f := range inits {
@@ -82,12 +78,23 @@ func (a *App) initMetrics(_ context.Context) {
 	metrics.Init()
 }
 
-func (a *App) initServiceProvider(ctx context.Context) {
+func (a *App) initServiceProvider(_ context.Context) {
 	a.serviceProvider = newServiceProvider()
 }
 
-func (a *App) initLog(ctx context.Context) {
-	logger.Init(getCore(getAtomicLevel()))
+func (a *App) initLog(_ context.Context) {
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "dev"
+	}
+
+	if env == "dev" {
+		level := zap.NewAtomicLevelAt(zap.DebugLevel)
+		logger.Init(getDevCore(level))
+	} else {
+		level := zap.NewAtomicLevelAt(zap.InfoLevel)
+		logger.Init(getProdCore(level))
+	}
 }
 
 func (a *App) initGRPCServer(ctx context.Context) {
@@ -108,7 +115,10 @@ func (a *App) initGRPCServer(ctx context.Context) {
 }
 
 func (a *App) runGRPCServer() error {
-	logger.Info("GRPC server is running on", zap.String("address", a.serviceProvider.GRPCConfig().Address()))
+	logger.Info(
+		"GRPC server is running on",
+		zap.String("address", a.serviceProvider.GRPCConfig().Address()),
+	)
 
 	lis, err := net.Listen("tcp", a.serviceProvider.GRPCConfig().Address())
 	if err != nil {
@@ -140,37 +150,31 @@ func (a *App) runPrometheus() error {
 	return nil
 }
 
-func getCore(level zap.AtomicLevel) zapcore.Core {
-	stdout := zapcore.AddSync(os.Stdout)
+func getDevCore(level zap.AtomicLevel) zapcore.Core {
+	developmentCfg := zap.NewDevelopmentEncoderConfig()
+	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
 
+	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
+
+	return zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), level)
+}
+
+func getProdCore(level zap.AtomicLevel) zapcore.Core {
 	file := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/app.log",
+		Filename:   "/app/logs/app.log",
 		MaxSize:    10,
 		MaxBackups: 3,
 		MaxAge:     7,
 	})
 
-	productionCfg := zap.NewProductionEncoderConfig()
-	productionCfg.TimeKey = "timestamp"
-	productionCfg.EncodeTime = zapcore.ISO8601TimeEncoder
+	prodCfg := zap.NewProductionEncoderConfig()
+	prodCfg.TimeKey = "timestamp"
+	prodCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 
-	developmentCfg := zap.NewDevelopmentEncoderConfig()
-	developmentCfg.EncodeLevel = zapcore.CapitalColorLevelEncoder
-
-	consoleEncoder := zapcore.NewConsoleEncoder(developmentCfg)
-	fileEncoder := zapcore.NewJSONEncoder(productionCfg)
+	jsonEncoder := zapcore.NewJSONEncoder(prodCfg)
 
 	return zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, stdout, level),
-		zapcore.NewCore(fileEncoder, file, level),
+		zapcore.NewCore(jsonEncoder, zapcore.AddSync(os.Stdout), level),
+		zapcore.NewCore(jsonEncoder, file, level),
 	)
-}
-
-func getAtomicLevel() zap.AtomicLevel {
-	var level zapcore.Level
-	if err := level.Set(*logLevel); err != nil {
-		log.Fatalf("failed to set log level: %v", err)
-	}
-
-	return zap.NewAtomicLevelAt(level)
 }

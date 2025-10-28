@@ -1,5 +1,22 @@
 services:
+  app:
+    container_name: auth
+    build:
+      context: .
+      dockerfile: local.Dockerfile
+    ports:
+      - "50051:50051"
+    env_file: .env
+    environment:
+      - APP_ENV=dev
+    volumes:
+      - .:/app
+    depends_on:
+      pg:
+        condition: service_healthy
+
   pg:
+    container_name: pg
     image: postgres:15-alpine3.22
     env_file:
       - .env
@@ -8,7 +25,7 @@ services:
       - "POSTGRES_USER=${PG_USER}"
       - "POSTGRES_PASSWORD=${PG_PASSWORD}"
     ports:
-      - "${PG_PORT}:5432"
+      - "5432:5432"
     volumes:
       - postgres_volume:/var/lib/postgresql/data
     healthcheck:
@@ -17,6 +34,7 @@ services:
       retries: 5
 
   migrator:
+    container_name: migrator
     build:
       context: .
       dockerfile: migration.Dockerfile
@@ -24,22 +42,5 @@ services:
     environment:
       DB_HOST: pg
 
-  prometheus:
-    image: prom/prometheus:v2.55.1
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-
-  grafana:
-    image: grafana/grafana-oss:12.2.0-17142428006
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-
 volumes:
   postgres_volume:
-  prometheus_data:
-  grafana_data:
