@@ -97,7 +97,7 @@ grpc-load-test:
     	--call user_v1.UserV1/Get \
     	--data '{"id": 1}' \
     	--rps 100 \
-    	--total 3000 \
+    	--total 10000 \
     	--insecure \
     	localhost:50051
 
@@ -108,7 +108,7 @@ grpc-error-load-test:
     	--proto api/user_v1/user.proto \
     	--call user_v1.UserV1/Get \
     	--data '{"id": 0}' \
-    	--rps 100 \
-    	--total 3000 \
+    	--rps 50 \
+    	--total 2000 \
     	--insecure \
     	localhost:50051
