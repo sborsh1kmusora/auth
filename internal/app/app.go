@@ -137,7 +137,7 @@ func (a *App) runPrometheus() error {
 	mux.Handle("/metrics", promhttp.Handler())
 
 	prometheusServer := &http.Server{
-		Addr:    "localhost:2112",
+		Addr:    ":2112",
 		Handler: mux,
 	}
 
